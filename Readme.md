@@ -37,3 +37,246 @@ mRecyclerView.setLayoutManager(mManager);
 ```
 
 基本上到这里，就差不多完成了。
+
+# 
+
+在RecycleView中，并没有直接为Item开放OnItemClick等点击事件，这需要我们自己动手来完成。
+下面介绍三中比较常用的方法来实现添加点击事件。
+
+## 在adapter中添加点击事件
+比较常见的一种方法。在使用listView时，我们有时候也会使用这种方法来实现添加点击事件。因为在
+adapter中添加点击事件的可以实现最item子view点击事件的监控。
+思路如下：</br>
+在adapter中新建并暴露自己定义的接口类型。
+```
+private OnRecyclerViewItemClickListener mOnItenClickListener = null;
+private OnRecyclerViewItemLongClickListener mOnItemLongClickListener = null;
+
+public void setOnItemClickListener(OnRecyclerViewItemClickListener listener){
+    this.mOnItenClickListener = listener;
+}
+
+public void setOnItemLongClickListener(OnRecyclerViewItemLongClickListener listener){
+    this.mOnItemLongClickListener = listener;
+}
+```
+在adapter中添加对指定元素的的点击事件。
+```
+v.setOnLongClickListener(new View.OnLongClickListener() {
+        @Override
+        public boolean onLongClick(View v) {
+            if(mOnItemLongClickListener!=null)
+            mOnItemLongClickListener.OnItemLongClickListener(v, (Integer) v.getTag());
+            return false;
+        }
+    });
+```
+在接口调用中，调用自己定义的接口来进行实现。
+```
+
+@Override
+public void onClick(View v) {
+    if(mOnItemLongClickListener !=null)
+    mOnItenClickListener.OnItemClickListener(v, (Integer) v.getTag());
+}
+```
+在activity中调用接口实现监听
+```
+mMyAdapter.setOnItemClickListener(new MyAdapter.OnRecyclerViewItemClickListener() {
+           @Override
+           public void OnItemClickListener(View view, int position) {
+               Toast.makeText(MainActivity.this,"通过方法3实现的点击事件"+position,Toast.LENGTH_SHORT).show();
+           }
+       });
+       mMyAdapter.setOnItemLongClickListener(new MyAdapter.OnRecyclerViewItemLongClickListener() {
+           @Override
+           public void OnItemLongClickListener(View view, int position) {
+               Toast.makeText(MainActivity.this,"通过方法3实现的点击事件长安"+position,Toast.LENGTH_SHORT).show();
+           }
+       });
+```
+
+## 通过重写GestureDetectorCompat实现监听
+虽然RecycleView没有直接实现对应的点击事件，但是在它给我们提供的api中，会发现它还是给我们预留了接口来进行实现
+。通过重写GestureDetectorCompat来实现对item点击事件的监控。
+```
+ private GestureDetectorCompat gestureDetectorCompat;
+
+    public interface OnItemClickListener{
+        void onItemClick(View view, int position);
+        void onItemLongClick(View view,int postion);
+    }
+
+    public ItemClickListener(final RecyclerView recyclerView,final OnItemClickListener clickListener) {
+        gestureDetectorCompat = new GestureDetectorCompat(recyclerView.getContext(),
+                new GestureDetector.SimpleOnGestureListener(){
+                    @Override
+                    public boolean onSingleTapUp(MotionEvent e) {
+                        View childView = recyclerView.findChildViewUnder(e.getX(),e.getY());
+                        if(childView != null && clickListener!= null){
+                            clickListener.onItemClick(childView,recyclerView.getChildAdapterPosition(childView));
+                        }
+                        return true;
+                    }
+
+                    @Override
+                    public void onLongPress(MotionEvent e) {
+                        View childView = recyclerView.findChildViewUnder(e.getX(),e.getY());
+                        if(childView != null && clickListener != null){
+                            clickListener.onItemLongClick(childView,recyclerView.getChildAdapterPosition(childView));
+                        }
+                    }
+                });
+    }
+
+    @Override
+    public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent e) {
+        gestureDetectorCompat.onTouchEvent(e);
+        return false;
+    }
+
+```
+
+在Activity中进行调用，可以参照下面：
+```
+mRecyclerView.addOnItemTouchListener(new ItemClickListener(mRecyclerView, new ItemClickListener.OnItemClickListener() {
+   @Override
+   public void onItemClick(View view, int position) {
+       Toast.makeText(MainActivity.this, "通过方法1实现的点击事件" + position, Toast.LENGTH_SHORT).show();
+   }
+
+   @Override
+   public void onItemLongClick(View view, int position) {
+       Toast.makeText(MainActivity.this, "通过方法1实现的点击事件" + position, Toast.LENGTH_SHORT).show();
+   }
+}));
+```
+
+## 利用OnChildAttachStateChangeListener来实现
+参照博客<http://www.littlerobots.nl/blog/Handle-Android-RecyclerView-Clicks/>
+```
+package com.hut.reoger.studentsrecycleview.addClickListener;
+
+import android.support.v7.widget.RecyclerView;
+import android.view.View;
+
+import com.hut.reoger.studentsrecycleview.R;
+
+/**
+ * Created by 24540 on 2017/3/28.
+ * 为Item添加点击事件：方法二：利用OnChildAttachStateChangeListener来实现
+ * 同时，使用方法，可以实现对item子控件的监听，具体实现参见类：
+ * 参考链接：http://www.littlerobots.nl/blog/Handle-Android-RecyclerView-Clicks/
+ */
+
+public class ItemClickSupport {
+    private final RecyclerView mRecyclerView;
+    private OnItemClickListener mOnItemClickListener;
+    private OnItemLongClickListener mOnItemLongClickListener;
+
+    private View.OnClickListener mOnClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            if (mOnItemClickListener != null) {
+                RecyclerView.ViewHolder holder = mRecyclerView.getChildViewHolder(v);
+                mOnItemClickListener.onItemClicked(mRecyclerView, holder.getAdapterPosition(), v);
+            }
+        }
+    };
+
+    private View.OnLongClickListener mOnLongClickListener = new View.OnLongClickListener() {
+        @Override
+        public boolean onLongClick(View v) {
+            if (mOnItemLongClickListener != null) {
+                RecyclerView.ViewHolder holder = mRecyclerView.getChildViewHolder(v);
+                return mOnItemLongClickListener.onItemLongClicked(mRecyclerView, holder.getAdapterPosition(), v);
+            }
+            return false;
+        }
+    };
+
+    private RecyclerView.OnChildAttachStateChangeListener mAttachListener
+            = new RecyclerView.OnChildAttachStateChangeListener() {
+        @Override
+        public void onChildViewAttachedToWindow(View view) {
+            if (mOnItemClickListener != null) {
+                view.setOnClickListener(mOnClickListener);
+            }
+            if (mOnItemLongClickListener != null) {
+                view.setOnLongClickListener(mOnLongClickListener);
+            }
+        }
+
+        @Override
+        public void onChildViewDetachedFromWindow(View view) {}
+    };
+
+    private ItemClickSupport(RecyclerView recyclerView) {
+        mRecyclerView = recyclerView;
+        mRecyclerView.setTag(R.id.item_click_support, this);
+        mRecyclerView.addOnChildAttachStateChangeListener(mAttachListener);
+    }
+
+    public static ItemClickSupport addTo(RecyclerView view) {
+        ItemClickSupport support = (ItemClickSupport) view.getTag(R.id.item_click_support);
+        if (support == null) {
+            support = new ItemClickSupport(view);
+        }
+        return support;
+    }
+
+    public static ItemClickSupport removeFrom(RecyclerView view) {
+        ItemClickSupport support = (ItemClickSupport) view.getTag(R.id.item_click_support);
+        if (support != null) {
+            support.detach(view);
+        }
+        return support;
+    }
+
+    public ItemClickSupport setOnItemClickListener(OnItemClickListener listener) {
+        mOnItemClickListener = listener;
+        return this;
+    }
+
+    public ItemClickSupport setOnItemLongClickListener(OnItemLongClickListener listener) {
+        mOnItemLongClickListener = listener;
+        return this;
+    }
+
+    private void detach(RecyclerView view) {
+        view.removeOnChildAttachStateChangeListener(mAttachListener);
+        view.setTag(R.id.item_click_support, null);
+    }
+
+    public interface OnItemClickListener {
+        void onItemClicked(RecyclerView recyclerView, int position, View v);
+    }
+
+    public interface OnItemLongClickListener {
+        boolean onItemLongClicked(RecyclerView recyclerView, int position, View v);
+    }
+}
+
+```
+在MainActivity监听如下：
+```
+  ItemClickSupport.addTo(mRecyclerView).setOnItemClickListener(new ItemClickSupport.OnItemClickListener() {
+               @Override
+               public void onItemClicked(RecyclerView recyclerView, int position, View v) {
+                    Toast.makeText(MainActivity.this,"通过方法2实现的点击事件"+position,Toast.LENGTH_SHORT).show();
+               }
+           });
+           ItemClickSupport.addTo(mRecyclerView).setOnItemLongClickListener(new ItemClickSupport.OnItemLongClickListener() {
+               @Override
+               public boolean onItemLongClicked(RecyclerView recyclerView, int position, View v) {
+                   Toast.makeText(MainActivity.this,"通过方法2实现的点击事件长安"+position,Toast.LENGTH_SHORT).show();
+                   return false;
+               }
+           });
+```
+用这种方法，也可以实现对item的子view进行监控。具体实现可以参见我的代码。
+
+综上，三种方法都可以实现对item点击事件的监控。
+方法1和方法3都可以实现对item的子view实现监听。
+方法2可以很方便实现对获取点击位置信息。
+方法1附加在adapter中，代码有点耦合，不推荐使用方法1。
