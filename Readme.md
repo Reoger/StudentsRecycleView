@@ -9,7 +9,7 @@ compile 'com.android.support:recyclerview-v7:25.3.0'
 
 这里的bean对象可以写成两个部分，一部分表示原始数据，一部分在RecycelView进行显示。
 这样说可能有点抽象，举个例子说明。我需要显示如图的样式：
-![显示的效果](/img/imd.jpg)
+![显示的效果](./img/imd.jpg)
 
 我创建两个bean对象，一个用于数据的传递，一个在adapter中用于item的显示。InfoBean用于控制数据。ItemHolder用于显示数据
 代码请参考:
@@ -462,3 +462,324 @@ RecyclerView.LayoutManager mManager = new new GridLayoutManager(this,2);
  mRecyclerView.setLayoutManager(mManager);
 ```
 那么，我们在adapter中编写的对GridLayoutManager的适配就无法获取到recycler而无法起作用。
+
+# 为RecyclerView添加item的分隔线
+---
+在listView中，添加分隔先的方法很简单，可以直接使用```setDivider(Drawable divider)```方法来设置分隔线。但是在recyceler中
+google并没有为我们提供这么简单的方法。因为recycle提倡高度的自定义话。google给我们提供了```addItemDecoration(RecyclerView.ItemDecoration  decor)```
+这个方法设置分隔线，但是里面的RecyclerView.ItemDecoration确要我们自己去实现。
+接下来我们就实现这样的一个类，查看一下ItemDecoration类给我们提供了什么接口：
+```
+public static abstract class ItemDecoration {
+
+public void onDraw(Canvas c, RecyclerView parent, State state) {
+            onDraw(c, parent);
+ }
+
+
+public void onDrawOver(Canvas c, RecyclerView parent, State state) {
+            onDrawOver(c, parent);
+ }
+
+public void getItemOffsets(Rect outRect, View view, RecyclerView parent, State state) {
+            getItemOffsets(outRect, ((LayoutParams) view.getLayoutParams()).getViewLayoutPosition(),
+                    parent);
+}
+
+@Deprecated
+public void getItemOffsets(Rect outRect, int itemPosition, RecyclerView parent) {
+            outRect.set(0, 0, 0, 0);
+ }
+```
+通过这个源码我们可以知道：
+* 我们需要通过重写onDraw来实现绘制分割线
+* 通过getItemOffsets或者getItemOffsets方法来为item设置偏移量
+* onDrawOver方法在onDraw之后，一般覆写onDraw方法即可
+下面是一般的实现：
+```
+package com.hut.reoger.studentsrecycleview.myDecoraltion;
+
+import android.content.Context;
+import android.content.res.TypedArray;
+import android.graphics.Canvas;
+import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.view.View;
+
+/**
+ * Created by 24540 on 2017/3/30.
+ * 为Recycler每个item之间添加间隔
+ * 参考博客：http://blog.csdn.net/lmj623565791/article/details/45059587
+ */
+
+public class DividerItemDecoration extends RecyclerView.ItemDecoration {
+    private Context mContext;
+    private Drawable mDivider;
+    private int mOrientation;
+
+    public static final int HORIZONAL = LinearLayoutManager.HORIZONTAL;
+    public static final int VERTICAL = LinearLayoutManager.VERTICAL;
+    public static final int[] ATRRS = new int[]{android.R.attr.listDivider};
+
+    public DividerItemDecoration(Context mContext, int mOrientation) {
+        this.mContext = mContext;
+        this.mOrientation = mOrientation;
+        final TypedArray typedArray = mContext.obtainStyledAttributes(ATRRS);
+        this.mDivider = typedArray.getDrawable(0);
+
+    }
+
+    //设置屏幕方向
+    public void setOrientation(int orientation) {
+        if (orientation != HORIZONAL && orientation != VERTICAL) {
+            throw new IllegalArgumentException("未知的屏幕方向");
+        }
+        mOrientation = orientation;
+    }
+
+
+    //需要重写这个方法，实现绘制item之间的间隔
+    @Override
+    public void onDraw(Canvas c, RecyclerView parent, RecyclerView.State state) {
+        if (mOrientation == HORIZONAL) {
+            drawHorizonalLine(c, parent, state);
+        } else {
+            drawVerticalLine(c, parent, state);
+        }
+    }
+
+    //绘制竖线
+    private void drawVerticalLine(Canvas canvas, RecyclerView recyclerView, RecyclerView.State state) {
+        int top = recyclerView.getPaddingTop();
+        int bottom = recyclerView.getBottom();
+        final int childCount = recyclerView.getChildCount();
+        for (int i = 0; i < childCount; i++) {
+            final View child = recyclerView.getChildAt(i);
+
+            final RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) child.getLayoutParams();
+            final int left = params.rightMargin + child.getRight();
+            final int right = left+mDivider.getIntrinsicHeight();
+            mDivider.setBounds(left, top, right, bottom);
+            mDivider.draw(canvas);
+        }
+    }
+
+    /**
+     * 绘制横线
+     *
+     * @param canvas
+     * @param recyclerView
+     * @param state
+     */
+    private void drawHorizonalLine(Canvas canvas, RecyclerView recyclerView, RecyclerView.State state) {
+        int left = recyclerView.getPaddingLeft();
+        int right = recyclerView.getWidth() - recyclerView.getPaddingRight();
+        final int childCount = recyclerView.getChildCount();
+        for (int i = 0; i < childCount; i++){
+            final View child = recyclerView.getChildAt(i);
+
+            //获得child的布局信息
+            final RecyclerView.LayoutParams params = (RecyclerView.LayoutParams)child.getLayoutParams();
+            final int top = child.getBottom() + params.bottomMargin;
+            final int bottom = top + mDivider.getIntrinsicHeight();
+            mDivider.setBounds(left, top, right, bottom);
+            mDivider.draw(canvas);
+        }
+
+    }
+
+    //如果item之间设置了间隔，那么每个item就需要向下移动一定的位置
+    @Override
+    public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
+
+        if(mOrientation ==HORIZONAL){
+            outRect.set(0,0,0,mDivider.getIntrinsicHeight());
+        }else{
+            outRect.set(0,0,0,mDivider.getIntrinsicWidth());
+        }
+    }
+}
+```
+里面的注释还算是比较多，这里主要讲解一些```mDivider.setBounds(int left,int top,int right,int bottom);```四个参数的含义
+![img](./img/img5.jpg)
+在activity中使用就比较简单了：
+```
+ mRecyclerView.addItemDecoration(new DividerItemDecoration(this,DividerItemDecoration.VERTICAL));
+```
+另外，如果需要适配对GridLayoutManager布局的话，可以参考下面的代码：
+```
+
+public class DividerGridItemDecoration extends RecyclerView.ItemDecoration{
+    private static final int[] ATTRS = new int[] { android.R.attr.listDivider };
+    private Drawable mDivider;
+
+    public DividerGridItemDecoration(Context context)
+    {
+        final TypedArray a = context.obtainStyledAttributes(ATTRS);
+        mDivider = a.getDrawable(0);
+        a.recycle();
+    }
+
+    @Override
+    public void onDraw(Canvas c, RecyclerView parent, RecyclerView.State state)
+    {
+
+        drawHorizontal(c, parent);
+        drawVertical(c, parent);
+
+    }
+
+    private int getSpanCount(RecyclerView parent)
+    {
+        // 列数
+        int spanCount = -1;
+        RecyclerView.LayoutManager layoutManager = parent.getLayoutManager();
+        if (layoutManager instanceof GridLayoutManager)
+        {
+
+            spanCount = ((GridLayoutManager) layoutManager).getSpanCount();
+        } else if (layoutManager instanceof StaggeredGridLayoutManager)
+        {
+            spanCount = ((StaggeredGridLayoutManager) layoutManager)
+                    .getSpanCount();
+        }
+        return spanCount;
+    }
+
+    public void drawHorizontal(Canvas c, RecyclerView parent)
+    {
+        int childCount = parent.getChildCount();
+        for (int i = 0; i < childCount; i++)
+        {
+            final View child = parent.getChildAt(i);
+            final RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) child
+                    .getLayoutParams();
+            final int left = child.getLeft() - params.leftMargin;
+            final int right = child.getRight() + params.rightMargin
+                    + mDivider.getIntrinsicWidth();
+            final int top = child.getBottom() + params.bottomMargin;
+            final int bottom = top + mDivider.getIntrinsicHeight();
+            mDivider.setBounds(left, top, right, bottom);
+            mDivider.draw(c);
+        }
+    }
+
+    public void drawVertical(Canvas c, RecyclerView parent)
+    {
+        final int childCount = parent.getChildCount();
+        for (int i = 0; i < childCount; i++)
+        {
+            final View child = parent.getChildAt(i);
+
+            final RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) child
+                    .getLayoutParams();
+            final int top = child.getTop() - params.topMargin;
+            final int bottom = child.getBottom() + params.bottomMargin;
+            final int left = child.getRight() + params.rightMargin;
+            final int right = left + mDivider.getIntrinsicWidth();
+
+            mDivider.setBounds(left, top, right, bottom);
+            mDivider.draw(c);
+        }
+    }
+
+    private boolean isLastColum(RecyclerView parent, int pos, int spanCount,
+                                int childCount)
+    {
+        RecyclerView.LayoutManager layoutManager = parent.getLayoutManager();
+        if (layoutManager instanceof GridLayoutManager)
+        {
+            if ((pos + 1) % spanCount == 0)// 如果是最后一列，则不需要绘制右边
+            {
+                return true;
+            }
+        } else if (layoutManager instanceof StaggeredGridLayoutManager)
+        {
+            int orientation = ((StaggeredGridLayoutManager) layoutManager)
+                    .getOrientation();
+            if (orientation == StaggeredGridLayoutManager.VERTICAL)
+            {
+                if ((pos + 1) % spanCount == 0)// 如果是最后一列，则不需要绘制右边
+                {
+                    return true;
+                }
+            } else
+            {
+                childCount = childCount - childCount % spanCount;
+                if (pos >= childCount)// 如果是最后一列，则不需要绘制右边
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isLastRaw(RecyclerView parent, int pos, int spanCount,
+                              int childCount)
+    {
+        RecyclerView.LayoutManager layoutManager = parent.getLayoutManager();
+        if (layoutManager instanceof GridLayoutManager)
+        {
+            childCount = childCount - childCount % spanCount;
+            if (pos >= childCount)// 如果是最后一行，则不需要绘制底部
+                return true;
+        } else if (layoutManager instanceof StaggeredGridLayoutManager)
+        {
+            int orientation = ((StaggeredGridLayoutManager) layoutManager)
+                    .getOrientation();
+            // StaggeredGridLayoutManager 且纵向滚动
+            if (orientation == StaggeredGridLayoutManager.VERTICAL)
+            {
+                childCount = childCount - childCount % spanCount;
+                // 如果是最后一行，则不需要绘制底部
+                if (pos >= childCount)
+                    return true;
+            } else
+            // StaggeredGridLayoutManager 且横向滚动
+            {
+                // 如果是最后一行，则不需要绘制底部
+                if ((pos + 1) % spanCount == 0)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public void getItemOffsets(Rect outRect, int itemPosition,
+                               RecyclerView parent)
+    {
+        int spanCount = getSpanCount(parent);
+        int childCount = parent.getAdapter().getItemCount();
+        if (isLastRaw(parent, itemPosition, spanCount, childCount))// 如果是最后一行，则不需要绘制底部
+        {
+            outRect.set(0, 0, mDivider.getIntrinsicWidth(), 0);
+        } else if (isLastColum(parent, itemPosition, spanCount, childCount))// 如果是最后一列，则不需要绘制右边
+        {
+            outRect.set(0, 0, 0, mDivider.getIntrinsicHeight());
+        } else
+        {
+            outRect.set(0, 0, mDivider.getIntrinsicWidth(),
+                    mDivider.getIntrinsicHeight());
+        }
+    }
+
+}
+
+```
+运行效果如图：
+![img6](./img/img6.jpg)
+对了，这个样式是可以自己进行修改了：在styles.xml文件中进行如下修改：
+```
+<resources>
+    <!-- Base application theme. -->
+	<style name = "AppTheme" parent = "Theme.AppCompat.Light.DarkActionBar">
+		<item name="android:listDivider">@drawable/divider</item>
+    </style>
+</resources>
+
+```
+通过这里，我们可以实现对分割线样式的控制。到此，分隔线就结束了。

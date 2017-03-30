@@ -2,13 +2,15 @@ package com.hut.reoger.studentsrecycleview;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.view.LayoutInflater;
 import android.view.View;
 
 import com.hut.reoger.studentsrecycleview.adapter.MyAdapterWith;
 import com.hut.reoger.studentsrecycleview.bean.InfoBean;
+import com.hut.reoger.studentsrecycleview.myDecoraltion.DividerGridItemDecoration;
+import com.hut.reoger.studentsrecycleview.myDecoraltion.DividerItemDecoration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,22 +29,23 @@ public class MainActivity extends AppCompatActivity {
 
         RecyclerView mRecyclerView = (RecyclerView) findViewById(R.id.recycler);
         //RecyclerView.LayoutManager mManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
-        //RecyclerView.LayoutManager mManager = new GridLayoutManager(this,2);
+        RecyclerView.LayoutManager mManager = new GridLayoutManager(this,2);
 
-        RecyclerView.LayoutManager mManager = new StaggeredGridLayoutManager(2,StaggeredGridLayoutManager.VERTICAL);
+        //RecyclerView.LayoutManager mManager = new StaggeredGridLayoutManager(2,StaggeredGridLayoutManager.VERTICAL);
         mRecyclerView.setLayoutManager(mManager);
 
         //mMyAdapter = new MyAdapter(this, getData());
         mMyAdapter = new MyAdapterWith(this,getData());
 
         mRecyclerView.setAdapter(mMyAdapter);
-        //mRecyclerView.setLayoutManager(mManager);
+
 
         View view  = LayoutInflater.from(this).inflate(R.layout.head,mRecyclerView,false);
         mMyAdapter.setHeaderView(view);
         View footer = LayoutInflater.from(this).inflate(R.layout.foot,mRecyclerView,false);
         mMyAdapter.setFooterView(footer);
 
+        mRecyclerView.addItemDecoration(new DividerGridItemDecoration(this));
 
         //addItemClickListener(mRecyclerView,4);
     }
