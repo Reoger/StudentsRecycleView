@@ -389,10 +389,10 @@ mMyAdapter.setFooterView(footer);
 其中```R.layout.head```和```R.layout.foot```是head和foot的布局。
 
 当然。这样写好之后，我们可以观察到这样的结果：
-![添加header](/img/img2)
-![添加foot](/img/img3)
+![添加header](/img/img2.jpg)
+![添加foot](/img/img3.jpg)
 基本正常，但是当我们使用GridLayoutManager时，会发现这样的问题。
-![添加foot](/img/img4)
+![添加foot](/img/img4.jpg)
 可以看到，这里我们的header和footer被当作一个item，并没有实现我们想到的置顶占行的效果。
 解决方案：
 利用GridLayoutManager的setSpanSizeLookup方法：
