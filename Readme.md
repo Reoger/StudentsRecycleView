@@ -280,3 +280,185 @@ public class ItemClickSupport {
 方法1和方法3都可以实现对item的子view实现监听。
 方法2可以很方便实现对获取点击位置信息。
 方法1附加在adapter中，代码有点耦合，不推荐使用方法1。
+
+
+# 为RecyclerView添加header和footer
+
+为recyclerView添加header和footer也是我们在开发过程中经常遇见的，实现起来也是比较简单的。下面介绍怎么添加header和footer
+
+其实我们可以将header和footer看做是特殊的item，在添加他之后，我们值需要对他进行一些特殊的处理就可以达到我们想到的效果。
+
+为了简单起见，我们直接在adapter中进行这一部分的操作。
+
+在adapter中新建一些标识的int值，用于区分是否需要添加header和footer，如下所示：
+```
+public static final int TYPE_HEADER = 0;  //说明是带有Header的
+public static final int TYPE_FOOTER = 1;  //说明是带有Footer的
+public static final int TYPE_NORMAL = 2;  //说明是不带有header和footer的
+```
+
+对外暴露添加header和footer方法，参考如下：
+
+```
+private View mHeaderView;
+private View mFooterView;
+
+public void setHeaderView(View headerView) {
+        mHeaderView = headerView;
+        notifyItemInserted(0);
+    }
+
+    public void setFooterView(View footerView) {
+        mFooterView = footerView;
+        notifyItemInserted(getItemCount() - 1);
+    }
+```
+
+覆写getItemViewType()方法，用于区分是否需要添加head和footer
+```
+ @Override
+    public int getItemViewType(int position) {
+        if (mHeaderView == null && mFooterView == null) {
+            return TYPE_NORMAL;
+        }
+        if (position == 0) {
+            return TYPE_HEADER;
+        }
+        if (position == getItemCount() - 1) {
+            return TYPE_FOOTER;
+        }
+        return TYPE_NORMAL;
+    }
+```
+
+在onCreateViewHolder中添加对header和footer的支持
+```
+if (mHeaderView != null && viewType == TYPE_HEADER) {
+    return new ItemHolder(mHeaderView);
+}
+if (mFooterView != null && viewType == TYPE_FOOTER) {
+    return new ItemHolder(mFooterView);
+}
+```
+在onBindViewHolder增加对header和footer的处理，如果当前对象是header或者footer直接返回即可。
+如果有header的话，因为header也需要占一个位子，所以显示的时候需要显示当前位子的前一个位子。
+```
+if (getItemViewType(position) == TYPE_HEADER) return;
+else if (getItemViewType(position) == TYPE_FOOTER) return;
+else {
+    if (holder instanceof MyAdapterWith.ItemHolder) {
+        position = holder.getLayoutPosition();
+        position = mHeaderView == null ? position : position - 1;
+        //计算当前的位置，如果添加了header的话，header也需要占用一个位置
+        if (position < datas.size()) {
+            holder.imageView.setImageResource(datas.get(position).getId());
+            holder.teTitle.setText(datas.get(position).getTitle());
+            holder.teContent.setText(datas.get(position).getContent());
+        }
+    }
+}
+```
+然后，需要在ViewHolder中添加对header和footer的支持
+```
+  public class ItemHolder extends RecyclerView.ViewHolder {
+        public ImageView imageView;
+        public TextView teTitle;
+        public TextView teContent;
+
+
+        public ItemHolder(View itemView) {
+            super(itemView);
+            if (itemView == mHeaderView)
+                return;
+            if (itemView == mFooterView)
+                return;
+
+            imageView = (ImageView) itemView.findViewById(R.id.item_image);
+            teTitle = (TextView) itemView.findViewById(R.id.item_title);
+            teContent = (TextView) itemView.findViewById(R.id.item_content);
+        }
+```
+最后，我们就可以直接在activity中进行添加了
+```
+View view  = LayoutInflater.from(this).inflate(R.layout.head,mRecyclerView,false);
+mMyAdapter.setHeaderView(view);
+View footer = LayoutInflater.from(this).inflate(R.layout.foot,mRecyclerView,false);
+mMyAdapter.setFooterView(footer);
+```
+
+其中```R.layout.head```和```R.layout.foot```是head和foot的布局。
+
+当然。这样写好之后，我们可以观察到这样的结果：
+![添加header](/img/img2)
+![添加foot](/img/img3)
+基本正常，但是当我们使用GridLayoutManager时，会发现这样的问题。
+![添加foot](/img/img4)
+可以看到，这里我们的header和footer被当作一个item，并没有实现我们想到的置顶占行的效果。
+解决方案：
+利用GridLayoutManager的setSpanSizeLookup方法：
+```
+gridLayoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
+    @Override
+    public int getSpanSize(int position) {
+        if (getItemViewType(position) == TYPE_HEADER || getItemViewType(position) == TYPE_FOOTER)
+            return gridLayoutManager.getSpanCount();
+        else
+            return 1;
+    }
+});
+```
+这里的getSpanSize()方法返回的值决定了每个position上item占据的单元格个数。为了简单起见，可以将这个方法放在adapter中。代码如下：
+```
+ @Override
+    public void onAttachedToRecyclerView(RecyclerView recyclerView) {
+        super.onAttachedToRecyclerView(recyclerView);
+        RecyclerView.LayoutManager manager = recyclerView.getLayoutManager();
+        if(manager==null)       Log.d("TAG", "manager=null");
+
+        if (manager instanceof GridLayoutManager) {
+
+            final GridLayoutManager gridLayoutManager = (GridLayoutManager) manager;
+            gridLayoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
+                @Override
+                public int getSpanSize(int position) {
+                    if (getItemViewType(position) == TYPE_HEADER || getItemViewType(position) == TYPE_FOOTER)
+                        return gridLayoutManager.getSpanCount();
+                    else
+                        return 1;
+                }
+            });
+        }
+    }
+```
+最后，再为StaggeredGridLayoutManager做一些处理。
+```
+ @Override
+    public void onViewAttachedToWindow(ItemHolder holder) {
+        super.onViewAttachedToWindow(holder);
+        ViewGroup.LayoutParams lp = holder.itemView.getLayoutParams();
+        if (lp != null
+                && lp instanceof StaggeredGridLayoutManager.LayoutParams) {
+            StaggeredGridLayoutManager.LayoutParams p = (StaggeredGridLayoutManager.LayoutParams) lp;
+            if (mHeaderView != null)
+                p.setFullSpan(holder.getLayoutPosition() == 0);
+//            if(mFooterView!=null)
+//                 p.setFullSpan(holder.getLayoutPosition() ==datas.size());
+        }
+    }
+```
+到此，添加header和footer的基本操作就完成了。不过在日常使用中，我们肯定会对每一次都需要编写一个这么复杂的header类感觉很麻烦，这里可以考虑封装一下。
+对了，在使用的过程中，如果需要适配GridLayoutManager的话，在activity的recycler的setAdapter方法之前，需要先调用 mRecyclerView.setLayoutManager(mManager);
+参见代码：
+```
+RecyclerView.LayoutManager mManager = new new GridLayoutManager(this,2);
+mRecyclerView.setLayoutManager(mManager);
+
+ mRecyclerView.setAdapter(mMyAdapter);
+```
+如果这样写：
+```
+RecyclerView.LayoutManager mManager = new new GridLayoutManager(this,2);
+ mRecyclerView.setAdapter(mMyAdapter);
+ mRecyclerView.setLayoutManager(mManager);
+```
+那么，我们在adapter中编写的对GridLayoutManager的适配就无法获取到recycler而无法起作用。

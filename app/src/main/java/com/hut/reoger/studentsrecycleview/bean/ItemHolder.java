@@ -20,6 +20,7 @@ public class ItemHolder extends RecyclerView.ViewHolder{
 
     public ItemHolder(View itemView) {
         super(itemView);
+
         imageView = (ImageView) itemView.findViewById(R.id.item_image);
         teTitle = (TextView) itemView.findViewById(R.id.item_title);
         teContent = (TextView) itemView.findViewById(R.id.item_content);

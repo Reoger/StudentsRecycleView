@@ -19,6 +19,8 @@ import java.util.List;
  */
 
 public class MyAdapter extends RecyclerView.Adapter<ItemHolder> implements View.OnClickListener {
+
+
     private LayoutInflater mInflater;
     private List<InfoBean> datas;
 
@@ -26,13 +28,22 @@ public class MyAdapter extends RecyclerView.Adapter<ItemHolder> implements View.
     private OnRecyclerViewItemLongClickListener mOnItemLongClickListener = null;
 
 
+
+
+
     public MyAdapter(Context mContext, List<InfoBean> datas) {
         this.datas = datas;
         mInflater = LayoutInflater.from(mContext);
     }
 
+
+
+
     @Override
     public ItemHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+
+
+
         View v = mInflater.inflate(R.layout.item_list,parent,false);
         ItemHolder itemHolder = new ItemHolder(v);
 
@@ -51,9 +62,12 @@ public class MyAdapter extends RecyclerView.Adapter<ItemHolder> implements View.
 
     @Override
     public void onBindViewHolder(ItemHolder holder, int position) {
-        holder.imageView.setImageResource(datas.get(position).getId());
-        holder.teTitle.setText(datas.get(position).getTitle());
-        holder.teContent.setText(datas.get(position).getContent());
+
+            holder.imageView.setImageResource(datas.get(position).getId());
+            holder.teTitle.setText(datas.get(position).getTitle());
+            holder.teContent.setText(datas.get(position).getContent());
+
+
 
         //如果有必要，可以在这里为view的部件添加监听事件。
         //形如：holder.teTitle.setOnClickListener(this);
@@ -65,13 +79,11 @@ public class MyAdapter extends RecyclerView.Adapter<ItemHolder> implements View.
 
     @Override
     public int getItemCount() {
+
         return datas.size();
     }
 
-    @Override
-    public int getItemViewType(int position) {
-        return super.getItemViewType(position);
-    }
+
 
     @Override
     public void onClick(View v) {
