@@ -13,7 +13,67 @@ compile 'com.android.support:recyclerview-v7:25.3.0'
 
 我创建两个bean对象，一个用于数据的传递，一个在adapter中用于item的显示。InfoBean用于控制数据。ItemHolder用于显示数据
 代码请参考:
-[/.](http://reoger.cc/2048/html)
+infoBean对象如下：
+
+```
+package com.hut.reoger.studentsrecycleview.bean;
+
+/**
+ * Created by 24540 on 2017/3/28.
+ */
+
+public class InfoBean {
+    private int id;
+    private String title;
+    private String content;
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+}
+
+```
+
+ItemHolder代码如下：
+```
+
+public class ItemHolder extends RecyclerView.ViewHolder{
+    public ImageView imageView;
+    public TextView teTitle;
+    public TextView teContent;
+
+
+    public ItemHolder(View itemView) {
+        super(itemView);
+
+        imageView = (ImageView) itemView.findViewById(R.id.item_image);
+        teTitle = (TextView) itemView.findViewById(R.id.item_title);
+        teContent = (TextView) itemView.findViewById(R.id.item_content);
+    }
+}
+
+```
+这里需要记住的是，这个类需要继承ViewHolder。当然，这个类写在adapter中也完全是ok的。
 
 3. 创建adapter对象
 详细参照例子，这里提出要点：
@@ -810,4 +870,154 @@ SwipeRefreshLayout包含在V4的jar包中，不需要特殊的导入，更多细
 
 </android.support.v4.widget.SwipeRefreshLayout>
 ```
-在MainActivity中
+在MainActivity中添加监听事件即可实现:
+主要代码如下：
+```
+ mSwipRefreshLayout.setProgressBackgroundColorSchemeResource(android.R.color.white);
+        mSwipRefreshLayout.setColorSchemeResources(android.R.color.holo_blue_light,
+                android.R.color.holo_red_light,android.R.color.holo_orange_light,
+                android.R.color.holo_green_light);
+        mSwipRefreshLayout.setProgressViewOffset(false, 0, (int) TypedValue
+                .applyDimension(TypedValue.COMPLEX_UNIT_DIP, 24, getResources()
+                        .getDisplayMetrics()));
+                        //设置进度条的颜色
+        mSwipRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener(){
+
+            @Override
+            public void onRefresh() {
+                //模仿加载数据
+                //加载更多的逻辑在这里进行实现
+               new Handler().postDelayed(new Runnable() {
+                   @Override
+                   public void run() {
+                     loadMoreData();//加载数据
+                   }
+               },2000);
+               //加载完毕后，记得将设置运行状态为false，隐藏进度条的显示
+                mSwipRefreshLayout.setRefreshing(false);
+            }
+        });
+```
+
+到此，只需要实现加载数据和通知数据更新即可，这里不是我们的重点。我们就实现了下拉刷新的功能。、
+然后，我们在来实现当我们拉到底的时候，加载更多。
+参考链接：<https://www.easydone.cn/2015/10/26/>
+为了代码的独立性，我们单独将其主要实现的方法封装在一个抽象类中：
+要实现下拉刷新，我们首先要考虑的是，我们什么时候开始刷新、依据是什么。
+
+
+```
+public abstract class DropDownListener extends RecyclerView.OnScrollListener {
+
+    //声明一个LinearLayoutManager
+    private LinearLayoutManager mLinearLayoutManager;
+
+    //当前页，从0开始
+    private int currentPage = 0;
+    //已经加载出来的Item的数量
+    private int totalItemCount;
+
+    //主要用来存储上一个totalItemCount
+    private int previousTotal = 0;
+
+    //在屏幕上可见的item数量
+    private int visibleItemCount;
+
+    //在屏幕可见的Item中的第一个
+    private int firstVisibleItem;
+
+    //是否正在上拉数据
+    private boolean loading = true;
+
+    public DropDownListener(LinearLayoutManager linearLayoutManager) {
+        this.mLinearLayoutManager = linearLayoutManager;
+    }
+
+    @Override
+    public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+        super.onScrolled(recyclerView, dx, dy);
+
+        visibleItemCount = recyclerView.getChildCount();
+        totalItemCount = mLinearLayoutManager.getItemCount();
+        firstVisibleItem = mLinearLayoutManager.findFirstVisibleItemPosition();
+        if (loading) {
+            if (totalItemCount > previousTotal) {
+                //说明数据已经加载结束
+                loading = false;
+                previousTotal = totalItemCount;
+            }
+        }
+       //当没有在加载且 已经加载出来的item数量-屏幕上可见的item数量<=屏幕上可见的第一个item的序号（即已经滑倒底的时候）
+       //执行相应的操作
+        if (!loading && totalItemCount - visibleItemCount <= firstVisibleItem) {
+            currentPage++;
+            onLoadMore(currentPage);
+            loading = true;
+        }
+    }
+
+    /**
+     * 提供一个抽闲方法，在Activity中监听到这个EndLessOnScrollListener
+     * 并且实现这个方法
+     */
+    public abstract void onLoadMore(int currentPage);
+}
+```
+然后，我们调用的时候就很简单了。关键代码如下：
+```
+ mRecyclerView.addOnScrollListener(new DropDownListener((LinearLayoutManager) mManager) {
+            @Override
+            public void onLoadMore(int currentPage) {
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        loadMoreData();
+                    }
+                },2000);
+            }
+        });
+```
+到此，我们就实现了简单的下拉刷新、上拉加载的功能。如图；
+<div align=center>
+
+<img src="./img/gif1.gif" />
+</div><br/>
+可以看到，我们的确是实现了上拉加载、下拉刷新的功能。但是在下拉加载的时候，并没有任何提示，
+这一点是非常不友好的。于是、我们继续来改进。
+
+因为我们之前实现了添加header和footer的功能。所以，比较简单的一种思想就是
+直接添加footer当作我们下拉刷新的提示。当刷新完成的时候，隐藏footer就ok了。
+下面我们来实现代码：
+将footer改造成我们想要的效果即可，譬如，我将footer设置呈这样：
+```
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             android:layout_width="match_parent"
+             android:layout_height="80dp"
+             android:background="#fff"
+             android:orientation="vertical">
+
+<TextView
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:gravity="center"
+	android:paddingTop="10dp"
+	android:textColor="#F00"
+	android:text="正在加载" />
+<ProgressBar
+	android:id="@+id/progressBar"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content" />
+
+</FrameLayout>
+```
+然后，设置recyclerView添加footer，设置效果如下：
+<div alien= center>
+<img src="./img/gif2.gif" >
+<div>
+
+效果基本达到我们的预想。但是这种方法也有一定的缺点：
+1.不能实现自己回弹（即松开手指自动隐藏）
+2.不能横好的独立出来，这就造成不是很好封装成一个jar
+3.当我们需要一个footer的时候，就无法满足需求。
+正对上面的三点，我们需要需找新的方案来解决这个问题。但是这里就不做介绍了。

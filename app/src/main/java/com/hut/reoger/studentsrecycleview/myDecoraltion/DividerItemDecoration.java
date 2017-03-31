@@ -78,7 +78,7 @@ public class DividerItemDecoration extends RecyclerView.ItemDecoration {
         int left = recyclerView.getPaddingLeft();
         int right = recyclerView.getWidth() - recyclerView.getPaddingRight();
         final int childCount = recyclerView.getChildCount();
-        for (int i = 0; i < childCount; i++){
+        for (int i = 0; i < childCount-1; i++){
             final View child = recyclerView.getChildAt(i);
 
             //获得child的布局信息

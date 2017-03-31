@@ -47,7 +47,8 @@ public abstract class DropDownListener extends RecyclerView.OnScrollListener {
                 previousTotal = totalItemCount;
             }
         }
-        //这里需要好好理解
+        //当没有在加载且 已经加载出来的item数量-屏幕上可见的item数量<=屏幕上可见的第一个item的序号（即已经滑倒底的时候）
+        //执行相应的操作
         if (!loading && totalItemCount - visibleItemCount <= firstVisibleItem) {
             currentPage++;
             onLoadMore(currentPage);

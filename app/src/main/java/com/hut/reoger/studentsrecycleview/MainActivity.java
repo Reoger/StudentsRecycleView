@@ -13,7 +13,7 @@ import android.view.View;
 import com.hut.reoger.studentsrecycleview.adapter.MyAdapterWith;
 import com.hut.reoger.studentsrecycleview.addClickListener.DropDownListener;
 import com.hut.reoger.studentsrecycleview.bean.InfoBean;
-import com.hut.reoger.studentsrecycleview.myDecoraltion.DividerGridItemDecoration;
+import com.hut.reoger.studentsrecycleview.myDecoraltion.DividerItemDecoration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
         View footer = LayoutInflater.from(this).inflate(R.layout.foot,mRecyclerView,false);
         mMyAdapter.setFooterView(footer);
 
-        mRecyclerView.addItemDecoration(new DividerGridItemDecoration(this));
+        mRecyclerView.addItemDecoration(new DividerItemDecoration(this,DividerItemDecoration.HORIZONAL));
 
         //addItemClickListener(mRecyclerView,4);
 

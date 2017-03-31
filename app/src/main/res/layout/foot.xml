@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android = "http://schemas.android.com/apk/res/android"
-              android:orientation = "vertical"
-              android:layout_width = "match_parent"
-              android:layout_height = "80dp">
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             android:layout_width="match_parent"
+             android:layout_height="80dp"
+             android:background="#fff"
+             android:orientation="vertical">
 		
-<ImageView
-	android:layout_width = "match_parent"
-	android:layout_height = "wrap_content"
-	android:background="@mipmap/foot"/>
-	<TextView
-		android:layout_width = "match_parent"
-		android:layout_height = "wrap_content"
-		android:gravity="center"
-		android:textSize="20sp"
-		android:paddingTop="50dp"
-		android:textColor="#f00"
-		android:text="这个是footer"/>
+<TextView
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:gravity="center"
+	android:paddingTop="10dp"
+	android:textColor="#F00"
+	android:text="正在加载" />
+<ProgressBar
+	android:id="@+id/progressBar"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content" />
+	
 </FrameLayout>
