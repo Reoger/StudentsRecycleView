@@ -50,6 +50,10 @@ public class MyAdapterWith extends RecyclerView.Adapter<MyAdapterWith.ItemHolder
         notifyItemInserted(getItemCount() - 1);
     }
 
+    public void loadMoreData( List<InfoBean> data){
+       this.datas.addAll(data);
+        notifyDataSetChanged();
+    }
 
     @Override
     public ItemHolder onCreateViewHolder(ViewGroup parent, int viewType) {

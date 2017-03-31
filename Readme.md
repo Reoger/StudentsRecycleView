@@ -772,6 +772,7 @@ public class DividerGridItemDecoration extends RecyclerView.ItemDecoration{
 ```
 运行效果如图：
 ![img6](./img/img6.jpg)
+
 对了，这个样式是可以自己进行修改了：在styles.xml文件中进行如下修改：
 ```
 <resources>
@@ -783,3 +784,30 @@ public class DividerGridItemDecoration extends RecyclerView.ItemDecoration{
 
 ```
 通过这里，我们可以实现对分割线样式的控制。到此，分隔线就结束了。
+
+# 为Recycler添加下拉刷新，上拉加载更多功能
+当然，完全可以自己动手通过自定义view来实现下拉刷新的功能，但是具体实现起来还是比较麻烦的。如果有兴趣，可以参考慕课网上的相关视屏
+[传送门](http://www.imooc.com/learn/135)
+但是目前我们有更加方便的方法来实现这样的功能，google已经为我们提供了一个上拉刷新与下拉加载更多的控件。
+SwipeRefreshLayout。现在就通过这个控件为recyclerView添加上拉刷新与下载功能。
+SwipeRefreshLayout包含在V4的jar包中，不需要特殊的导入，更多细节请参考：[官方参考文档](https://developer.android.com/reference/android/support/v4/widget/SwipeRefreshLayout.html)
+接下来就学习怎么使用：
+```
+<android.support.v4.widget.SwipeRefreshLayout
+		android:id="@+id/swipeRefreshLayout"
+		android:layout_width="368dp"
+		android:layout_height="495dp"
+		android:scrollbars="vertical"
+		tools:layout_editor_absoluteY="8dp"
+		tools:layout_editor_absoluteX="8dp">
+<android.support.v7.widget.RecyclerView
+	android:id="@+id/recycler"
+	android:layout_width="368dp"
+	android:layout_height="495dp"
+	android:background="#ccc"
+	tools:layout_editor_absoluteX="8dp"
+	tools:layout_editor_absoluteY="8dp" />
+
+</android.support.v4.widget.SwipeRefreshLayout>
+```
+在MainActivity中

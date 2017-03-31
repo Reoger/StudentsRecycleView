@@ -1,19 +1,23 @@
 package com.hut.reoger.studentsrecycleview;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 
 import com.hut.reoger.studentsrecycleview.adapter.MyAdapterWith;
+import com.hut.reoger.studentsrecycleview.addClickListener.DropDownListener;
 import com.hut.reoger.studentsrecycleview.bean.InfoBean;
 import com.hut.reoger.studentsrecycleview.myDecoraltion.DividerGridItemDecoration;
-import com.hut.reoger.studentsrecycleview.myDecoraltion.DividerItemDecoration;
 
 import java.util.ArrayList;
 import java.util.List;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -21,17 +25,27 @@ public class MainActivity extends AppCompatActivity {
     //private MyAdapter mMyAdapter;
     private MyAdapterWith mMyAdapter;
 
+
+    private SwipeRefreshLayout mSwipRefreshLayout;
+    private RecyclerView.LayoutManager mManager;
+
+    private LinearLayoutManager manager;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
 
-        RecyclerView mRecyclerView = (RecyclerView) findViewById(R.id.recycler);
-        //RecyclerView.LayoutManager mManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
-        RecyclerView.LayoutManager mManager = new GridLayoutManager(this,2);
+       // manager = new LinearLayoutManager(this);
 
-        //RecyclerView.LayoutManager mManager = new StaggeredGridLayoutManager(2,StaggeredGridLayoutManager.VERTICAL);
+
+        mSwipRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipeRefreshLayout);
+        RecyclerView mRecyclerView = (RecyclerView) findViewById(R.id.recycler);
+        mManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
+        //mManager = new GridLayoutManager(this,2);
+
+        //mManager = new StaggeredGridLayoutManager(2,StaggeredGridLayoutManager.VERTICAL);
         mRecyclerView.setLayoutManager(mManager);
 
         //mMyAdapter = new MyAdapter(this, getData());
@@ -48,6 +62,42 @@ public class MainActivity extends AppCompatActivity {
         mRecyclerView.addItemDecoration(new DividerGridItemDecoration(this));
 
         //addItemClickListener(mRecyclerView,4);
+
+        initmSwipRefreshLayout(mRecyclerView);
+    }
+
+    private void initmSwipRefreshLayout( RecyclerView mRecyclerView) {
+        mSwipRefreshLayout.setProgressBackgroundColorSchemeResource(android.R.color.white);
+        mSwipRefreshLayout.setColorSchemeResources(android.R.color.holo_blue_light,
+                android.R.color.holo_red_light,android.R.color.holo_orange_light,
+                android.R.color.holo_green_light);
+        mSwipRefreshLayout.setProgressViewOffset(false, 0, (int) TypedValue
+                .applyDimension(TypedValue.COMPLEX_UNIT_DIP, 24, getResources()
+                        .getDisplayMetrics()));
+        mSwipRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener(){
+            //模仿加载了五条数据
+            @Override
+            public void onRefresh() {
+               new Handler().postDelayed(new Runnable() {
+                   @Override
+                   public void run() {
+                     loadMoreData();
+                   }
+               },2000);
+                mSwipRefreshLayout.setRefreshing(false);
+            }
+        });
+        mRecyclerView.addOnScrollListener(new DropDownListener((LinearLayoutManager) mManager) {
+            @Override
+            public void onLoadMore(int currentPage) {
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        loadMoreData();
+                    }
+                },2000);
+            }
+        });
     }
 
     //添加item点击事件的监听
@@ -131,5 +181,16 @@ public class MainActivity extends AppCompatActivity {
         return datas;
     }
 
+    private void loadMoreData(){
+        List<InfoBean> datas= new ArrayList<>();
+        for(int i=0;i<3;i++){
+            InfoBean info = new InfoBean();
+            info.setId(R.mipmap.ic_launcher_round);
+            info.setContent("新增的内容"+i);
+            info.setTitle("新增的内容");
+            datas.add(info);
+        }
+        mMyAdapter.loadMoreData(datas);
+    }
 
 }
