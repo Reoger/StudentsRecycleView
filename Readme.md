@@ -1012,12 +1012,266 @@ public abstract class DropDownListener extends RecyclerView.OnScrollListener {
 </FrameLayout>
 ```
 然后，设置recyclerView添加footer，设置效果如下：
-<div alien= center>
+<div align= center>
 <img src="./img/gif2.gif" >
-<div>
+</div>
 
 效果基本达到我们的预想。但是这种方法也有一定的缺点：
-1.不能实现自己回弹（即松开手指自动隐藏）
-2.不能横好的独立出来，这就造成不是很好封装成一个jar
-3.当我们需要一个footer的时候，就无法满足需求。
+
+1. 不能实现自己回弹（即松开手指自动隐藏）
+2. 不能横好的独立出来，这就造成不是很好封装成一个jar
+3. 当我们需要一个footer的时候，就无法满足需求。
 正对上面的三点，我们需要需找新的方案来解决这个问题。但是这里就不做介绍了。
+
+
+# 为recyclerView添加Item移动、删除
+先看看效果
+<div align=center>
+<img src="./img/gif3.gif"/>
+</div>
+
+看样子很不错把。下面我们来进行实现：
+在RecyclerView中，为我们提供了ItemTouchHelper这么一个类来帮助我们实现这个功能。我们先来看看这个类给我们的注释把：
+---
+
+
+ * This is a utility class to add swipe to dismiss and drag & drop support to RecyclerView.
+ * <p>
+ * It works with a RecyclerView and a Callback class, which configures what type of interactions
+ * are enabled and also receives events when user performs these actions.
+ * <p>
+ * Depending on which functionality you support, you should override
+ * {@link Callback#onMove(RecyclerView, ViewHolder, ViewHolder)} and / or
+ * {@link Callback#onSwiped(ViewHolder, int)}.
+ * <p>
+ * This class is designed to work with any LayoutManager but for certain situations, it can be
+ * optimized for your custom LayoutManager by extending methods in the
+ * {@link ItemTouchHelper.Callback} class or implementing {@link ItemTouchHelper.ViewDropHandler}
+ * interface in your LayoutManager.
+ * <p>
+ * By default, ItemTouchHelper moves the items' translateX/Y properties to reposition them. On
+ * platforms older than Honeycomb, ItemTouchHelper uses canvas translations and View's visibility
+ * property to move items in response to touch events. You can customize these behaviors by
+ * overriding {@link Callback#onChildDraw(Canvas, RecyclerView, ViewHolder, float, float, int,
+ * boolean)}
+ * or {@link Callback#onChildDrawOver(Canvas, RecyclerView, ViewHolder, float, float, int,
+ * boolean)}.
+ * <p/>
+ * Most of the time, you only need to override <code>onChildDraw</code> but due to limitations of
+ * platform prior to Honeycomb, you may need to implement <code>onChildDrawOver</code> as well.
+
+
+
+---
+
+这个注释写的已经很明白了，这个类就是就是帮助我们添加滑动和删除效果到RecyclerView中的。我们只需要继承CallBack，然后实现 {@link Callback#onMove(RecyclerView, ViewHolder, ViewHolder)} and / or{@link Callback#onSwiped(ViewHolder, int)}.
+这两个方法就可以了。下面是具体实现过程。
+
+```
+public class MyItemTouchHelpCallback extends ItemTouchHelper.Callback {
+
+    /**Item操作的回调*/
+    private OnItemTouchCallbackListener onItemTouchCallbackListener;
+    /**是否可以拖拽**/
+    private boolean isCanDrag = false;
+    /***是否可以滑动*/
+    private boolean isCanSwipe = false;
+
+    public MyItemTouchHelpCallback(OnItemTouchCallbackListener onItemTouchCallbackListener) {
+        this.onItemTouchCallbackListener = onItemTouchCallbackListener;
+    }
+
+    public void setOnItemTouchCallbackListener(OnItemTouchCallbackListener onItemTouchCallbackListener){
+        this.onItemTouchCallbackListener = onItemTouchCallbackListener;
+    }
+
+    /**
+     * 设置是否可以被拖拽
+     * */
+    public void setDragEnable(boolean CanDrag){
+        this.isCanDrag = CanDrag;
+    }
+
+    /**
+     * 设置是否可以滑动
+     * @param canSwipe
+     */
+    public void setSwipeEnable(boolean canSwipe){
+        this.isCanSwipe = canSwipe;
+    }
+
+    /**
+     * 当Item被长安的时候是否可以拖动
+     * @return
+     */
+    @Override
+    public boolean isLongPressDragEnabled() {
+        return isCanDrag;
+    }
+
+    /**
+     * Item是否可以被滑动(H：左右滑动，V：上下滑动)
+     * @return
+     */
+    @Override
+    public boolean isItemViewSwipeEnabled() {
+        return isCanSwipe;
+    }
+
+
+    /**
+     * 当用户拖拽或者滑动Item的时候需要我们告诉系统滑动或者拖拽的方向
+     * @param recyclerView
+     * @param viewHolder
+     * @return
+     */
+    @Override
+    public int getMovementFlags(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder) {
+        RecyclerView.LayoutManager layoutManager = recyclerView.getLayoutManager();
+        if(layoutManager instanceof LinearLayoutManager) {
+            LinearLayoutManager linearLayoutManager = (LinearLayoutManager) layoutManager;
+            int orientation = linearLayoutManager.getOrientation();
+
+            int dragFlag = 0;
+            int swipFlag = 0;
+
+            if(orientation== LinearLayoutManager.HORIZONTAL){
+                swipFlag = ItemTouchHelper.UP |ItemTouchHelper.DOWN;
+                dragFlag = ItemTouchHelper.LEFT |ItemTouchHelper.RIGHT;
+            }else if(orientation== LinearLayoutManager.VERTICAL){
+                dragFlag = ItemTouchHelper.UP |ItemTouchHelper.DOWN;
+                swipFlag = ItemTouchHelper.LEFT |ItemTouchHelper.RIGHT;
+            }
+            return makeMovementFlags(dragFlag,swipFlag);
+        }
+        return 0;
+    }
+
+
+    /**
+     * 当Item被拖拽的时候回调
+     * @param recyclerView
+     * @param viewHolder 拖拽的vieholder
+     * @param target 目的拖拽viewHolder
+     * @return
+     */
+    @Override
+    public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
+        if(onItemTouchCallbackListener!=null)
+            return onItemTouchCallbackListener.onMove(viewHolder.getAdapterPosition(),target.getAdapterPosition());
+        return false;
+    }
+
+    /**
+     * 当Item被删除的时候回调
+     * @param viewHolder 要删除的item
+     * @param direction
+     */
+    @Override
+    public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
+        if(onItemTouchCallbackListener!=null){
+            onItemTouchCallbackListener.onSwiped(viewHolder.getAdapterPosition());
+        }
+    }
+
+    public interface OnItemTouchCallbackListener{
+        /**
+         * 当某个item被滑动删除的时候
+         * @param position
+         */
+        void onSwiped(int position);
+
+        /**
+         * 当连个Item位置互相的时候
+         * @param srcPosition
+         * @param targerPostion
+         * @return
+         */
+        boolean onMove(int srcPosition,int targerPostion);
+    }
+}
+```
+
+
+上面的代码添加了不少的注释，相信理解起来很简单。
+然后，在MainActivity中就可以进行调用了，但是为了方便起见，我们还是将其封装一次。
+帮助类可以这么写：
+```
+public class MyItemTouchHelper extends YolandaItemTouchHelper {
+
+    private  MyItemTouchHelpCallback myItemTouchHelpCallback;
+
+
+    public MyItemTouchHelper(MyItemTouchHelpCallback.OnItemTouchCallbackListener callback) {
+        super(new MyItemTouchHelpCallback(callback));
+        myItemTouchHelpCallback = (MyItemTouchHelpCallback) getCallback();
+    }
+
+
+    /**
+     * 设置是否可以拖动
+     * @param canDrag
+     */
+    public void setDragEnable(boolean canDrag){
+        myItemTouchHelpCallback.setDragEnable(canDrag);
+    }
+
+    public void setSwipeEnable(boolean canSwipe){
+        myItemTouchHelpCallback.setSwipeEnable(canSwipe);
+    }
+
+```
+
+对了，为了方便获取到CallBack()，我们在新建了**android.support.v7.widget.helper**包，然后在该包下新建了
+一个类```YolandaItemTouchHelper```，代码如下：
+```
+public class YolandaItemTouchHelper extends ItemTouchHelper {
+    /**
+     * Creates an ItemTouchHelper that will work with the given Callback.
+     * <p>
+     * You can attach ItemTouchHelper to a RecyclerView via
+     * {@link #attachToRecyclerView(RecyclerView)}. Upon attaching, it will add an item decoration,
+     * an onItemTouchListener and a Child attach / detach listener to the RecyclerView.
+     *
+     * @param callback The Callback which controls the behavior of this touch helper.
+     */
+    public YolandaItemTouchHelper(Callback callback) {
+        super(callback);
+    }
+    public Callback getCallback(){
+        return mCallback;//返回了CallBack
+    }
+}
+
+```
+最后，在MainActivity中进行调用就非常的简单了：代码如下：
+```
+ itemTouchHelper = new MyItemTouchHelper(onItemTouchCallbackListener);
+        itemTouchHelper.attachToRecyclerView(mRecyclerView);
+        itemTouchHelper.setSwipeEnable(true);
+        itemTouchHelper.setDragEnable(true);
+```
+当然，```onItemTouchCallbackListener```也是很重要的，这里我们还需要先申明：
+```
+ private MyItemTouchHelpCallback.OnItemTouchCallbackListener onItemTouchCallbackListener = new MyItemTouchHelpCallback.OnItemTouchCallbackListener(){
+
+        @Override
+        public void onSwiped(int position) {
+            if(datas !=null){
+                datas.remove(position);
+                adpater.notifyItemRemoved(position);
+            }
+        }
+
+        @Override
+        public boolean onMove(int srcPosition, int targerPostion) {
+            if(datas != null){
+                Collections.swap(datas,srcPosition,targerPostion);
+                adpater.notifyItemMoved(srcPosition,targerPostion);
+            }
+
+            return true;
+        }
+    };
+```
+大功告成！赶快去试试把~

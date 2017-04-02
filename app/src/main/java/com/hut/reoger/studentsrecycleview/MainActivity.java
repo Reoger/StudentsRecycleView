@@ -26,10 +26,13 @@ public class MainActivity extends AppCompatActivity {
     private MyAdapterWith mMyAdapter;
 
 
+    List<InfoBean> Datas= new ArrayList<>();
+
     private SwipeRefreshLayout mSwipRefreshLayout;
     private RecyclerView.LayoutManager mManager;
 
     private LinearLayoutManager manager;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,12 +57,16 @@ public class MainActivity extends AppCompatActivity {
         mRecyclerView.setAdapter(mMyAdapter);
 
 
+
+
         View view  = LayoutInflater.from(this).inflate(R.layout.head,mRecyclerView,false);
         mMyAdapter.setHeaderView(view);
         View footer = LayoutInflater.from(this).inflate(R.layout.foot,mRecyclerView,false);
         mMyAdapter.setFooterView(footer);
 
         mRecyclerView.addItemDecoration(new DividerItemDecoration(this,DividerItemDecoration.HORIZONAL));
+
+
 
         //addItemClickListener(mRecyclerView,4);
 
@@ -178,6 +185,7 @@ public class MainActivity extends AppCompatActivity {
                 datas.add(info);
             }
         }
+        Datas = datas;
         return datas;
     }
 
@@ -190,7 +198,9 @@ public class MainActivity extends AppCompatActivity {
             info.setTitle("新增的内容");
             datas.add(info);
         }
+        Datas.addAll(datas);
         mMyAdapter.loadMoreData(datas);
     }
+
 
 }
