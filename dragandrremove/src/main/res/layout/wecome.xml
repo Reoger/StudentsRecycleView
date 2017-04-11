@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<reoger.hut.com.strrecyclerview.util.BGARefreshLayout
+		xmlns:android="http://schemas.android.com/apk/res/android"
+		android:id="@+id/rl_modulename_refresh"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent">
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:text="5d:87:28:93:2c:dc:12:dd:7c:e2:c1:ef:14:ce:a3:77:E5:cb:9A:0a2---实现包装recycleView并发布功能：1.实现上拉下拉刷新2.实现点击事件3.实现右滑删除4.可以添加head和footer5.添加、删除item时实现动画效果6.简化使用"
+			android:layout_weight="1"/>
+</reoger.hut.com.strrecyclerview.util.BGARefreshLayout>

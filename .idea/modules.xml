@@ -2,10 +2,10 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/Rrecyclerview/Rrecyclerview.iml" filepath="$PROJECT_DIR$/Rrecyclerview/Rrecyclerview.iml" />
       <module fileurl="file://$PROJECT_DIR$/StudentsRecycleView.iml" filepath="$PROJECT_DIR$/StudentsRecycleView.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/dragandrremove/dragandrremove.iml" filepath="$PROJECT_DIR$/dragandrremove/dragandrremove.iml" />
-      <module fileurl="file://$PROJECT_DIR$/strrecyclerview/strrecyclerview.iml" filepath="$PROJECT_DIR$/strrecyclerview/strrecyclerview.iml" />
+      <module fileurl="file://$PROJECT_DIR$/testuser/testuser.iml" filepath="$PROJECT_DIR$/testuser/testuser.iml" />
     </modules>
   </component>
 </project>

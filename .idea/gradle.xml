@@ -8,9 +8,9 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/Rrecyclerview" />
             <option value="$PROJECT_DIR$/app" />
-            <option value="$PROJECT_DIR$/dragandrremove" />
-            <option value="$PROJECT_DIR$/strrecyclerview" />
+            <option value="$PROJECT_DIR$/testuser" />
           </set>
         </option>
         <option name="resolveModulePerSourceSet" value="false" />

@@ -1,5 +1,6 @@
 package reoger.hut.com.dragandrremove;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -134,5 +135,11 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewIOnCl
                 }
             });
 
+    }
+
+
+    public void nextActivity(View view){
+        startActivity(new Intent(MainActivity.this,NextActivity.class));
+        Log.d("TAG","测试");
     }
 }

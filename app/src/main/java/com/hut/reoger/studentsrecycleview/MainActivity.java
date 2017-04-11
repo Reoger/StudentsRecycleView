@@ -67,7 +67,6 @@ public class MainActivity extends AppCompatActivity {
         mRecyclerView.addItemDecoration(new DividerItemDecoration(this,DividerItemDecoration.HORIZONAL));
 
 
-
         //addItemClickListener(mRecyclerView,4);
 
         initmSwipRefreshLayout(mRecyclerView);
@@ -188,6 +187,8 @@ public class MainActivity extends AppCompatActivity {
         Datas = datas;
         return datas;
     }
+
+
 
     private void loadMoreData(){
         List<InfoBean> datas= new ArrayList<>();

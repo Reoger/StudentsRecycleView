@@ -1,1 +1,1 @@
-include ':app', ':dragandrremove', ':strrecyclerview'
+include ':app', ':Rrecyclerview', ':testuser'

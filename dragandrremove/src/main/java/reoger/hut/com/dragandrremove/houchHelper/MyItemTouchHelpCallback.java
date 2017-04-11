@@ -110,6 +110,7 @@ public class MyItemTouchHelpCallback extends ItemTouchHelper.Callback {
      */
     @Override
     public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
+        Log.d("TAG","这里"+viewHolder.getAdapterPosition());
         if(onItemTouchCallbackListener!=null){
             onItemTouchCallbackListener.onSwiped(viewHolder.getAdapterPosition());
         }

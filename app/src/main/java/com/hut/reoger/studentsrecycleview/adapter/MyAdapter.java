@@ -74,6 +74,8 @@ public class MyAdapter extends RecyclerView.Adapter<ItemHolder> implements View.
 
 
 
+
+
         holder.itemView.setTag(position);
     }
 
